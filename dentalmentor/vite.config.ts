@@ -4,7 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: mode === 'gh-pages' ? '/dentalMentor.github.io/' : '/',
   plugins: [vue(), tailwindcss()],
   resolve: {
     alias: {
@@ -31,4 +32,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

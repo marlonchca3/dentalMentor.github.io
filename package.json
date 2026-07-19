@@ -1,0 +1,11 @@
+{
+  "name": "dentalmentor-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix dentalmentor run dev",
+    "build": "npm --prefix dentalmentor run build",
+    "build:pages": "npm --prefix dentalmentor run build:pages",
+    "preview": "npm --prefix dentalmentor run preview",
+    "deploy": "npm --prefix dentalmentor run deploy"
+  }
+}
