@@ -8,11 +8,15 @@
     "build": "vue-tsc -b && vite build",
     "build:pages": "vue-tsc -b && vite build --mode gh-pages",
     "preview": "vite preview",
-    "deploy": "npm run build && firebase deploy --only hosting,firestore:rules,firestore:indexes",
+    "predeploy:gh-pages": "npm run build:pages && cp dist/index.html dist/404.html",
+    "deploy:gh-pages": "gh-pages -d dist -b gh-pages",
+    "deploy": "npm run deploy:gh-pages",
+    "deploy:firebase": "npm run build && firebase deploy --only hosting,firestore:rules,firestore:indexes",
     "deploy:firestore": "firebase deploy --only firestore:rules,firestore:indexes",
     "deploy:storage": "firebase deploy --only storage",
     "deploy:functions": "npm --prefix functions run build && firebase deploy --only functions:createClinicAndAssignAdmin",
-    "deploy:hosting": "npm run build && firebase deploy --only hosting"
+    "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "deploy:hosting:firebase": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "firebase": "^12.16.0",
@@ -25,6 +29,7 @@
     "@types/node": "^24.13.2",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/tsconfig": "^0.9.1",
+    "gh-pages": "^6.3.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",

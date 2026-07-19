@@ -6,6 +6,10 @@
     "build": "npm --prefix dentalmentor run build",
     "build:pages": "npm --prefix dentalmentor run build:pages",
     "preview": "npm --prefix dentalmentor run preview",
-    "deploy": "npm --prefix dentalmentor run deploy"
+    "deploy": "npm --prefix dentalmentor run deploy",
+    "deploy:firebase": "npm --prefix dentalmentor run deploy:firebase"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }
