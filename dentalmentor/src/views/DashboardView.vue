@@ -51,16 +51,12 @@ const latestPayments = [
       <BaseCard>
         <h2 class="text-lg font-semibold text-slate-900">Proximas citas</h2>
         <ul class="mt-4 space-y-3">
-          <li
-            v-for="item in upcomingAppointments"
-            :key="item.id"
-            class="flex flex-col gap-2 rounded-xl bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between"
-          >
+          <li v-for="item in upcomingAppointments" :key="item.id" class="flex items-center justify-between rounded-xl bg-slate-50 p-3">
             <div>
               <p class="font-medium text-slate-900">{{ item.patientName }}</p>
               <p class="text-xs text-slate-600">{{ item.hour }} - {{ item.dentistName }}</p>
             </div>
-            <span class="w-fit rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-800">{{ item.status }}</span>
+            <span class="rounded-full bg-sky-100 px-3 py-1 text-xs text-sky-800">{{ item.status }}</span>
           </li>
         </ul>
       </BaseCard>
@@ -68,11 +64,7 @@ const latestPayments = [
       <BaseCard>
         <h2 class="text-lg font-semibold text-slate-900">Ultimos pagos</h2>
         <ul class="mt-4 space-y-3">
-          <li
-            v-for="payment in latestPayments"
-            :key="payment.id"
-            class="flex flex-col gap-1 rounded-xl bg-slate-50 p-3 sm:flex-row sm:items-center sm:justify-between"
-          >
+          <li v-for="payment in latestPayments" :key="payment.id" class="flex items-center justify-between rounded-xl bg-slate-50 p-3">
             <div>
               <p class="font-medium text-slate-900">{{ payment.patientName }}</p>
               <p class="text-xs text-slate-600">Metodo: {{ payment.method }}</p>
