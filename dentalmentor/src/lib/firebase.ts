@@ -5,29 +5,48 @@ import { getFirestore, Timestamp, serverTimestamp } from 'firebase/firestore'
 import { getFunctions } from 'firebase/functions'
 import { getStorage } from 'firebase/storage'
 
-const requiredEnv = [
-  'VITE_FIREBASE_API_KEY',
-  'VITE_FIREBASE_AUTH_DOMAIN',
-  'VITE_FIREBASE_PROJECT_ID',
-  'VITE_FIREBASE_STORAGE_BUCKET',
-  'VITE_FIREBASE_MESSAGING_SENDER_ID',
-  'VITE_FIREBASE_APP_ID',
-] as const
+const fallbackFirebaseConfig = {
+  apiKey: 'AIzaSyAIXmbt-i9xpVI_afHF_7xA3M-GxOiRZqo',
+  authDomain: 'dentalmentor-3ff9b.firebaseapp.com',
+  projectId: 'dentalmentor-3ff9b',
+  storageBucket: 'dentalmentor-3ff9b.firebasestorage.app',
+  messagingSenderId: '1015871013974',
+  appId: '1:1015871013974:web:cb5102ced7e87d6c6867f7',
+  measurementId: 'G-HT4YFCZJ9W',
+} as const
 
-for (const envName of requiredEnv) {
-  if (!import.meta.env[envName]) {
-    throw new Error(`Falta la variable de entorno ${envName}. Revisa tu archivo .env`)
+type FirebaseEnvKey =
+  | 'VITE_FIREBASE_API_KEY'
+  | 'VITE_FIREBASE_AUTH_DOMAIN'
+  | 'VITE_FIREBASE_PROJECT_ID'
+  | 'VITE_FIREBASE_STORAGE_BUCKET'
+  | 'VITE_FIREBASE_MESSAGING_SENDER_ID'
+  | 'VITE_FIREBASE_APP_ID'
+
+const missingEnv: FirebaseEnvKey[] = []
+
+const getEnvOrFallback = (envName: FirebaseEnvKey, fallbackValue: string) => {
+  const envValue = import.meta.env[envName]
+  if (!envValue) {
+    missingEnv.push(envName)
+    return fallbackValue
   }
+
+  return envValue
 }
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || undefined,
+  apiKey: getEnvOrFallback('VITE_FIREBASE_API_KEY', fallbackFirebaseConfig.apiKey),
+  authDomain: getEnvOrFallback('VITE_FIREBASE_AUTH_DOMAIN', fallbackFirebaseConfig.authDomain),
+  projectId: getEnvOrFallback('VITE_FIREBASE_PROJECT_ID', fallbackFirebaseConfig.projectId),
+  storageBucket: getEnvOrFallback('VITE_FIREBASE_STORAGE_BUCKET', fallbackFirebaseConfig.storageBucket),
+  messagingSenderId: getEnvOrFallback('VITE_FIREBASE_MESSAGING_SENDER_ID', fallbackFirebaseConfig.messagingSenderId),
+  appId: getEnvOrFallback('VITE_FIREBASE_APP_ID', fallbackFirebaseConfig.appId),
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || fallbackFirebaseConfig.measurementId,
+}
+
+if (missingEnv.length) {
+  console.warn(`Variables VITE faltantes: ${missingEnv.join(', ')}. Se usara configuracion fallback de Firebase.`)
 }
 
 const app = initializeApp(firebaseConfig)
