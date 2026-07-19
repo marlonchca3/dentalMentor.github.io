@@ -31,13 +31,19 @@ export const useAuthStore = defineStore('authStore', {
       onAuthStateChanged(auth, async (user) => {
         this.currentUser = user
 
-        if (user) {
-          await this.loadUserProfile(user.uid)
-        } else {
+        try {
+          if (user) {
+            await this.loadUserProfile(user.uid)
+          } else {
+            this.userProfile = null
+          }
+        } catch (error) {
+          // Never block initial routing if profile loading fails.
+          console.error('No se pudo cargar el perfil de usuario al iniciar.', error)
           this.userProfile = null
+        } finally {
+          this.authReady = true
         }
-
-        this.authReady = true
       })
     },
 

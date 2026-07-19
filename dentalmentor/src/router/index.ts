@@ -23,7 +23,7 @@ declare module 'vue-router' {
 }
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: '/dashboard' },
     { path: '/login', component: () => import('@/views/LoginView.vue') },
@@ -172,8 +172,14 @@ function waitForAuthReady(): Promise<void> {
   }
 
   return new Promise((resolve) => {
+    const startedAt = Date.now()
     const timer = setInterval(() => {
       if (authStore.authReady) {
+        clearInterval(timer)
+        resolve()
+      }
+
+      if (Date.now() - startedAt > 5000) {
         clearInterval(timer)
         resolve()
       }
@@ -207,7 +213,13 @@ router.beforeEach(async (to) => {
   }
 
   if (!authStore.userProfile) {
-    await authStore.loadUserProfile(authStore.currentUser.uid)
+    try {
+      await authStore.loadUserProfile(authStore.currentUser.uid)
+    } catch (error) {
+      console.error('No se pudo cargar el perfil desde el guard del router.', error)
+      await authStore.logout()
+      return '/login'
+    }
   }
 
   if (routeNeedsClinic(to)) {
