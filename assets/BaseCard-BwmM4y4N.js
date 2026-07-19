@@ -1,1 +1,0 @@
-import{d as e,w as t,x as n}from"./vendor-wuOVmgwJ.js";import{o as r}from"./index-b3YVS6Bi.js";var i={},a={class:`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm`};function o(r,i){return n(),e(`article`,a,[t(r.$slots,`default`)])}var s=r(i,[[`render`,o]]);export{s as t};
