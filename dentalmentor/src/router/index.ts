@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
 import { useAuthStore, useClinicStore } from '@/stores'
 import type { ClinicRole } from '@/types'
@@ -23,7 +23,10 @@ declare module 'vue-router' {
 }
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history:
+    typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')
+      ? createWebHashHistory(import.meta.env.BASE_URL)
+      : createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', redirect: '/dashboard' },
     { path: '/login', component: () => import('@/views/LoginView.vue') },
