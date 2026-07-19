@@ -1,0 +1,51 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isRootEmail() {
+      return isAuthenticated() && request.auth.token.email == 'dental@mentor.com';
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function clinicUserDoc(clinicId) {
+      return firestore.get(/databases/(default)/documents/clinicUsers/$(clinicId + '_' + request.auth.uid));
+    }
+
+    function isClinicMember(clinicId) {
+      return isRootEmail()
+        || (
+          isAuthenticated()
+          && firestore.exists(/databases/(default)/documents/clinicUsers/$(clinicId + '_' + request.auth.uid))
+          && clinicUserDoc(clinicId).data.status == 'active'
+        );
+    }
+
+    function hasRole(clinicId, roles) {
+      return isRootEmail() || (isClinicMember(clinicId) && clinicUserDoc(clinicId).data.role in roles);
+    }
+
+    function validFileType() {
+      return request.resource.contentType in ['image/jpeg', 'image/png', 'application/pdf'];
+    }
+
+    function validFileSize() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    match /clinics/{clinicId}/logos/{fileName} {
+      allow read: if isClinicMember(clinicId);
+      allow write: if hasRole(clinicId, ['clinicAdmin']) && validFileType() && validFileSize();
+    }
+
+    match /clinics/{clinicId}/patients/{patientId}/documents/{fileName} {
+      allow read: if hasRole(clinicId, ['clinicAdmin', 'dentist', 'receptionist', 'assistant']);
+      allow write: if hasRole(clinicId, ['clinicAdmin', 'dentist']) && validFileType() && validFileSize();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

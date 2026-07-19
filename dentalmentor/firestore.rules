@@ -1,0 +1,205 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isRootEmail() {
+      return isAuthenticated() && request.auth.token.email == 'dental@mentor.com';
+    }
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && request.auth.token.platformRole == 'superAdmin';
+    }
+
+    function isGlobalAdmin() {
+      return isSuperAdmin() || isRootEmail();
+    }
+
+    function clinicUserDoc(clinicId) {
+      return get(/databases/$(database)/documents/clinicUsers/$(clinicId + '_' + request.auth.uid));
+    }
+
+    function isClinicMember(clinicId) {
+      return isGlobalAdmin()
+        || (
+          isAuthenticated()
+          && exists(/databases/$(database)/documents/clinicUsers/$(clinicId + '_' + request.auth.uid))
+          && clinicUserDoc(clinicId).data.status == 'active'
+        );
+    }
+
+    function getClinicRole(clinicId) {
+      return clinicUserDoc(clinicId).data.role;
+    }
+
+    function isClinicAdmin(clinicId) {
+      return isGlobalAdmin() || (isClinicMember(clinicId) && getClinicRole(clinicId) == 'clinicAdmin');
+    }
+
+    function isDentist(clinicId) {
+      return isClinicMember(clinicId) && getClinicRole(clinicId) == 'dentist';
+    }
+
+    function hasClinicRole(clinicId, roles) {
+      return isGlobalAdmin() || (isClinicMember(clinicId) && getClinicRole(clinicId) in roles);
+    }
+
+    function belongsToClinic(resourceClinicId) {
+      return isGlobalAdmin() || isClinicMember(resourceClinicId);
+    }
+
+    match /users/{userId} {
+      allow read: if isGlobalAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow create: if isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.platformRole == 'user';
+      allow update: if isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.platformRole == resource.data.platformRole;
+      allow delete: if false;
+    }
+
+    match /clinics/{clinicId} {
+      allow read: if isGlobalAdmin() || isClinicMember(clinicId);
+      allow create: if isAuthenticated()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.slug is string
+        && request.resource.data.name is string
+        && request.resource.data.status == 'active'
+        && request.resource.data.subscriptionPlan in ['trial', 'basic', 'professional', 'clinic'];
+      allow update: if isGlobalAdmin() || isClinicAdmin(clinicId);
+      allow delete: if isGlobalAdmin();
+    }
+
+    match /clinicUsers/{clinicUserId} {
+      allow read: if isSuperAdmin()
+        || isGlobalAdmin()
+        || (isAuthenticated() && resource.data.userId == request.auth.uid)
+        || isClinicAdmin(resource.data.clinicId);
+
+      // Bootstrap controlado para entornos sin Cloud Functions: solo autoriza auto-alta inicial
+      // clinicAdmin del mismo usuario que creo la clinica.
+      allow create: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.role == 'clinicAdmin'
+        && request.resource.data.status == 'active'
+        && request.resource.data.invitedBy == request.auth.uid
+        && clinicUserId == (request.resource.data.clinicId + '_' + request.auth.uid)
+        && exists(/databases/$(database)/documents/clinics/$(request.resource.data.clinicId))
+        && get(/databases/$(database)/documents/clinics/$(request.resource.data.clinicId)).data.createdBy == request.auth.uid;
+
+      allow update: if isClinicAdmin(resource.data.clinicId)
+        && request.resource.data.clinicId == resource.data.clinicId
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.role in ['clinicAdmin', 'dentist', 'receptionist', 'assistant'];
+
+      allow delete: if isGlobalAdmin() || isClinicAdmin(resource.data.clinicId);
+    }
+
+    match /patients/{patientId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist', 'assistant']);
+      allow create: if isAuthenticated()
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist'])
+        && request.resource.data.clinicId is string;
+      allow update: if belongsToClinic(resource.data.clinicId)
+        && request.resource.data.clinicId == resource.data.clinicId
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist']);
+      allow delete: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist']);
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist', 'assistant']);
+      allow create, update: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist'])
+        && (resource == null || request.resource.data.clinicId == resource.data.clinicId);
+      allow delete: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'receptionist']);
+    }
+
+    match /clinicalHistories/{historyId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist']);
+      allow create, update, delete: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'dentist'])
+        && (resource == null || request.resource.data.clinicId == resource.data.clinicId);
+    }
+
+    match /odontograms/{odontogramId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist']);
+      allow write: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'dentist'])
+        && (resource == null || request.resource.data.clinicId == resource.data.clinicId);
+    }
+
+    match /odontogramItems/{itemId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist']);
+      allow write: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'dentist'])
+        && (resource == null || request.resource.data.clinicId == resource.data.clinicId);
+    }
+
+    match /treatmentPlans/{treatmentPlanId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist']);
+      allow write: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'dentist'])
+        && (resource == null || request.resource.data.clinicId == resource.data.clinicId);
+    }
+
+    match /treatments/{treatmentId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist']);
+      allow write: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'dentist'])
+        && (resource == null || request.resource.data.clinicId == resource.data.clinicId);
+    }
+
+    match /payments/{paymentId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist']);
+      allow create, update: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'receptionist'])
+        && (resource == null || request.resource.data.clinicId == resource.data.clinicId);
+      allow delete: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin']);
+    }
+
+    match /documents/{documentId} {
+      allow read: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist', 'receptionist']);
+      allow create: if isAuthenticated()
+        && request.resource.data.clinicId is string
+        && hasClinicRole(request.resource.data.clinicId, ['clinicAdmin', 'dentist'])
+        && request.resource.data.fileType in ['image/jpeg', 'image/png', 'application/pdf'];
+      allow update, delete: if belongsToClinic(resource.data.clinicId)
+        && hasClinicRole(resource.data.clinicId, ['clinicAdmin', 'dentist']);
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read: if isGlobalAdmin() || (belongsToClinic(resource.data.clinicId) && isClinicAdmin(resource.data.clinicId));
+      allow write: if isGlobalAdmin();
+    }
+
+    // Regla de cierre: todo lo no definido arriba queda denegado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
