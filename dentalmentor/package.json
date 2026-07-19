@@ -8,7 +8,7 @@
     "build": "vue-tsc -b && vite build",
     "build:pages": "vue-tsc -b && vite build --mode gh-pages",
     "preview": "vite preview",
-    "predeploy:gh-pages": "npm run build:pages && cp dist/index.html dist/404.html",
+    "predeploy:gh-pages": "npm run build:pages",
     "deploy:gh-pages": "gh-pages -d dist -b gh-pages",
     "deploy": "npm run deploy:gh-pages",
     "deploy:firebase": "npm run build && firebase deploy --only hosting,firestore:rules,firestore:indexes",
