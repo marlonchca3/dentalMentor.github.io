@@ -90,7 +90,18 @@ onMounted(async () => {
       message="Todavia no hay pacientes registrados para esta clinica."
     />
 
-    <BaseTable v-else>
+    <div v-else class="space-y-3 md:hidden">
+      <article v-for="patient in filteredPatients" :key="patient.id" class="rounded-2xl border border-slate-200 bg-white p-4">
+        <p class="font-semibold text-slate-900">{{ patient.firstName }} {{ patient.lastName }}</p>
+        <p class="mt-1 text-sm text-slate-600">{{ patient.documentType }} - {{ patient.documentNumber }}</p>
+        <p class="mt-1 text-sm text-slate-600">Telefono: {{ patient.phone || '-' }}</p>
+        <RouterLink :to="`/patients/${patient.id}`" class="mt-3 inline-block text-sm font-medium text-sky-700 hover:underline">
+          Ver detalle
+        </RouterLink>
+      </article>
+    </div>
+
+    <BaseTable v-if="filteredPatients.length" class="hidden md:block">
       <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
         <tr>
           <th class="px-4 py-3">Paciente</th>

@@ -17,7 +17,7 @@ const links = [
 <template>
   <div v-if="open" class="fixed inset-0 z-40 bg-slate-900/40 lg:hidden" @click="emit('close')" />
   <aside
-    class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-950 px-4 py-5 text-slate-100 transition lg:hidden"
+    class="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-xs overflow-y-auto bg-slate-950 px-4 py-5 text-slate-100 transition lg:hidden"
     :class="open ? 'translate-x-0' : '-translate-x-full'"
   >
     <div class="mb-4 flex items-center justify-between">

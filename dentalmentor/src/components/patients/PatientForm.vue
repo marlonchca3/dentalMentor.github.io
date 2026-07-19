@@ -71,7 +71,7 @@ function onSubmit() {
       />
     </div>
     <div class="md:col-span-2 flex justify-end">
-      <BaseButton type="submit">Guardar paciente</BaseButton>
+      <BaseButton class="w-full sm:w-auto" type="submit">Guardar paciente</BaseButton>
     </div>
   </form>
 </template>
