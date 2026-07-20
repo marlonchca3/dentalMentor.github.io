@@ -22,7 +22,7 @@ const form = reactive({
 async function onSubmit() {
   try {
     await authStore.register({ ...form })
-    await router.push('/verify-email')
+    await router.push('/create-clinic')
   } catch (error) {
     showToast(normalizeError(error), 'error')
   }
