@@ -4,11 +4,6 @@ import { useAuthStore, useClinicStore } from '@/stores'
 import type { ClinicRole } from '@/types'
 
 const DEMO_EMAIL = 'dental@mentor.com'
-const allowDemoLogin = import.meta.env.VITE_ALLOW_DEMO_LOGIN === 'true'
-
-function isDemoUserEmail(email: string | null | undefined) {
-  return allowDemoLogin && email === DEMO_EMAIL
-}
 
 function isRootEmail(email: string | null | undefined) {
   return email === DEMO_EMAIL
@@ -206,10 +201,6 @@ router.beforeEach(async (to) => {
 
   if (!authStore.currentUser) {
     return '/login'
-  }
-
-  if (!authStore.currentUser.emailVerified && !isDemoUserEmail(authStore.currentUser.email) && to.path !== '/verify-email') {
-    return '/verify-email'
   }
 
   if (!authStore.userProfile) {
