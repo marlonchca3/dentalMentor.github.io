@@ -63,7 +63,7 @@ async function onSubmit() {
       <h1 class="text-2xl font-bold text-slate-900">Iniciar sesion</h1>
       <p class="mt-1 text-sm text-slate-600">Accede a DentalMentor para administrar tu clinica.</p>
       <form class="mt-6 space-y-4" @submit.prevent="onSubmit">
-        <BaseInput v-model="form.email" label="Correo" type="email" required />
+        <BaseInput v-model="form.email" label="Correo" type="email" required readonly />
         <BaseInput v-model="form.password" label="Contrasena" type="password" required />
         <BaseButton class="w-full" type="submit" :disabled="authStore.loading">Entrar</BaseButton>
       </form>

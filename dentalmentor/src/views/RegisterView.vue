@@ -15,7 +15,7 @@ const { open, message, type, showToast } = useToast()
 const form = reactive({
   fullName: '',
   phone: '',
-  email: '',
+  email: 'dental@mentor.com',
   password: '',
 })
 
@@ -38,7 +38,7 @@ async function onSubmit() {
       <form class="mt-6 grid gap-4" @submit.prevent="onSubmit">
         <BaseInput v-model="form.fullName" label="Nombre completo" required />
         <BaseInput v-model="form.phone" label="Telefono" />
-        <BaseInput v-model="form.email" label="Correo" type="email" required />
+        <BaseInput v-model="form.email" label="Correo" type="email" required readonly />
         <BaseInput v-model="form.password" label="Contrasena" type="password" required />
         <BaseButton type="submit" :disabled="authStore.loading">Registrarme</BaseButton>
       </form>

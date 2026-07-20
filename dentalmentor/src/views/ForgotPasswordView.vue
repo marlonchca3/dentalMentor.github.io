@@ -8,7 +8,7 @@ import { useAuthStore } from '@/stores'
 import { normalizeError } from '@/utils/errorHandler'
 
 const authStore = useAuthStore()
-const email = ref('')
+const email = ref('dental@mentor.com')
 const { open, message, type, showToast } = useToast()
 
 async function onSubmit() {
@@ -28,7 +28,7 @@ async function onSubmit() {
       <h1 class="text-2xl font-bold text-slate-900">Recuperar contrasena</h1>
       <p class="mt-1 text-sm text-slate-600">Ingresa tu correo para recibir instrucciones.</p>
       <form class="mt-6 grid gap-4" @submit.prevent="onSubmit">
-        <BaseInput v-model="email" label="Correo" type="email" required />
+        <BaseInput v-model="email" label="Correo" type="email" required readonly />
         <BaseButton type="submit">Enviar enlace</BaseButton>
       </form>
       <RouterLink class="mt-4 inline-block text-sm text-sky-700 hover:underline" to="/login">
